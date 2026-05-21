@@ -69,7 +69,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 The Week 2 UML models are stored in the `uml_models` directory. They describe the main CHMS subsystems: alert generation, data storage, patient identification, and data access.
 
 ## Project Members
-- Student ID: STUDENT_ID_HERE
-
-## Project Members
 - Student ID: 6421560
