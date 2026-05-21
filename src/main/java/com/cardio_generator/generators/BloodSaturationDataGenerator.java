@@ -4,10 +4,18 @@ import java.util.Random;
 
 import com.cardio_generator.outputs.OutputStrategy;
 
+/**
+ * Generates realistic blood oxygen saturation values for simulated patients.
+ */
 public class BloodSaturationDataGenerator implements PatientDataGenerator {
     private static final Random random = new Random();
     private int[] lastSaturationValues;
 
+    /**
+     * Creates a generator and gives each patient a starting saturation value.
+     *
+     * @param patientCount number of patients in the simulation
+     */
     public BloodSaturationDataGenerator(int patientCount) {
         lastSaturationValues = new int[patientCount + 1];
 
@@ -17,6 +25,12 @@ public class BloodSaturationDataGenerator implements PatientDataGenerator {
         }
     }
 
+    /**
+     * Generates one blood saturation reading for a patient.
+     *
+     * @param patientId the simulated patient's identifier
+     * @param outputStrategy the output method that receives the generated reading
+     */
     @Override
     public void generate(int patientId, OutputStrategy outputStrategy) {
         try {

@@ -6,12 +6,20 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Executors;
 
+/**
+ * Sends generated patient data to a TCP client connected to a chosen port.
+ */
 public class TcpOutputStrategy implements OutputStrategy {
 
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private PrintWriter out;
 
+    /**
+     * Starts a TCP server and waits for one client connection.
+     *
+     * @param port the TCP port where the simulator should listen
+     */
     public TcpOutputStrategy(int port) {
         try {
             serverSocket = new ServerSocket(port);
@@ -32,6 +40,14 @@ public class TcpOutputStrategy implements OutputStrategy {
         }
     }
 
+    /**
+     * Sends one generated data point to the connected TCP client.
+     *
+     * @param patientId the simulated patient's identifier
+     * @param timestamp the time when the data was generated
+     * @param label the type of data being sent
+     * @param data the generated data value
+     */
     @Override
     public void output(int patientId, long timestamp, String label, String data) {
         if (out != null) {

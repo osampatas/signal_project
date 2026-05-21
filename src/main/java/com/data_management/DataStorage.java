@@ -13,6 +13,9 @@ import com.alerts.AlertGenerator;
  * patient IDs.
  */
 public class DataStorage {
+    // Singleton Pattern: one shared storage instance is available when the app needs it.
+    private static final DataStorage INSTANCE = new DataStorage();
+
     private Map<Integer, Patient> patientMap; // Stores patient objects indexed by their unique patient ID.
 
     /**
@@ -21,6 +24,17 @@ public class DataStorage {
      */
     public DataStorage() {
         this.patientMap = new HashMap<>();
+    }
+
+    /**
+     * Returns the shared DataStorage instance.
+     * The public constructor remains available so simple tests can create clean
+     * independent storage objects.
+     *
+     * @return the shared storage instance
+     */
+    public static DataStorage getInstance() {
+        return INSTANCE;
     }
 
     /**
@@ -36,11 +50,19 @@ public class DataStorage {
      * @param timestamp        the time at which the measurement was taken, in
      *                         milliseconds since the Unix epoch
      */
-    public void addPatientData(int patientId, double measurementValue, String recordType, long timestamp) {
+    public synchronized void addPatientData(int patientId, double measurementValue, String recordType, long timestamp) {
         Patient patient = patientMap.get(patientId);
         if (patient == null) {
             patient = new Patient(patientId);
             patientMap.put(patientId, patient);
+        }
+        for (PatientRecord record : patient.getAllRecords()) {
+            boolean sameRecord = record.getTimestamp() == timestamp
+                    && record.getRecordType().equals(recordType)
+                    && record.getMeasurementValue() == measurementValue;
+            if (sameRecord) {
+                return; // Real-time streams may retry a message, so skip exact duplicates.
+            }
         }
         patient.addRecord(measurementValue, recordType, timestamp);
     }
@@ -58,7 +80,7 @@ public class DataStorage {
      * @return a list of PatientRecord objects that fall within the specified time
      *         range
      */
-    public List<PatientRecord> getRecords(int patientId, long startTime, long endTime) {
+    public synchronized List<PatientRecord> getRecords(int patientId, long startTime, long endTime) {
         Patient patient = patientMap.get(patientId);
         if (patient != null) {
             return patient.getRecords(startTime, endTime);
@@ -67,11 +89,21 @@ public class DataStorage {
     }
 
     /**
+     * Retrieves a patient by ID.
+     *
+     * @param patientId the patient identifier
+     * @return the patient, or null if the patient does not exist
+     */
+    public synchronized Patient getPatient(int patientId) {
+        return patientMap.get(patientId);
+    }
+
+    /**
      * Retrieves a collection of all patients stored in the data storage.
      *
      * @return a list of all patients
      */
-    public List<Patient> getAllPatients() {
+    public synchronized List<Patient> getAllPatients() {
         return new ArrayList<>(patientMap.values());
     }
 

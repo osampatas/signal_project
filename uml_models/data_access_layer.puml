@@ -1,0 +1,59 @@
+@startuml
+title CHMS Data Access Layer
+
+' Listener classes collect raw input, then parser and adapter prepare safe data.
+interface DataListener {
+  + startListening(): void
+  + stopListening(): void
+  + receiveData(): String
+}
+
+class TCPDataListener {
+  - port: int
+  + startListening(): void
+  + stopListening(): void
+  + receiveData(): String
+}
+
+class WebSocketDataListener {
+  - port: int
+  + startListening(): void
+  + stopListening(): void
+  + receiveData(): String
+}
+
+class FileDataListener {
+  - filePath: String
+  + startListening(): void
+  + stopListening(): void
+  + receiveData(): String
+}
+
+class DataParser {
+  - expectedFormat: String
+  + parse(rawData: String): PatientData
+  + isValid(rawData: String): boolean
+}
+
+class DataSourceAdapter {
+  - listener: DataListener
+  - parser: DataParser
+  + collectData(): PatientData
+  + changeSource(listener: DataListener): void
+}
+
+class PatientData {
+  - patientId: String
+  - metricName: String
+  - value: double
+  - timestamp: long
+}
+
+DataListener <|.. TCPDataListener
+DataListener <|.. WebSocketDataListener
+DataListener <|.. FileDataListener
+DataSourceAdapter "1" --> "1" DataListener : reads raw data
+DataSourceAdapter "1" --> "1" DataParser : converts data
+DataParser "1" --> "0..*" PatientData : creates
+
+@enduml

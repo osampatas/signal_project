@@ -1,0 +1,58 @@
+@startuml
+title CHMS Data Storage System
+
+' Storage classes focus on keeping data organized, controlled, and auditable.
+class DataStorage {
+  - patientDataRecords: List<PatientData>
+  - accessController: AccessController
+  - auditLog: AuditLog
+  + savePatientData(data: PatientData): void
+  + getPatientData(patientId: String): List<PatientData>
+  + deleteExpiredData(): void
+}
+
+class PatientData {
+  - patientId: String
+  - metricName: String
+  - value: double
+  - timestamp: long
+  + anonymize(): PatientData
+}
+
+class DataRetriever {
+  - dataStorage: DataStorage
+  + findByPatientId(patientId: String): List<PatientData>
+  + findByTimeRange(startTime: long, endTime: long): List<PatientData>
+}
+
+class Patient {
+  - patientId: String
+  - displayName: String
+  + getPatientId(): String
+}
+
+class AccessController {
+  - allowedRoles: List<String>
+  + canRead(userRole: String): boolean
+  + canWrite(userRole: String): boolean
+}
+
+class DeletionPolicy {
+  - retentionDays: int
+  + isExpired(data: PatientData): boolean
+}
+
+class AuditLog {
+  - entries: List<String>
+  + recordAccess(patientId: String, action: String): void
+  + recordChange(patientId: String, action: String): void
+}
+
+Patient "1" --> "0..*" PatientData : owns
+DataStorage "1" o-- "0..*" PatientData : stores
+DataStorage "1" --> "1" AccessController : checks permission
+DataStorage "1" --> "1" AuditLog : records activity
+DataStorage "1" --> "1" DeletionPolicy : applies
+DataRetriever "1" --> "1" DataStorage : requests data
+
+@enduml

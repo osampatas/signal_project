@@ -1,0 +1,48 @@
+@startuml
+title CHMS Patient Identification System
+
+' The identifier separates incoming simulator data from hospital identity records.
+class PatientIdentifier {
+  - identityManager: IdentityManager
+  + identify(data: IncomingPatientData): HospitalPatient
+  + validatePatientId(patientId: String): boolean
+}
+
+class HospitalPatient {
+  - hospitalPatientId: String
+  - safeDisplayName: String
+  - dateOfBirth: String
+  + getHospitalPatientId(): String
+}
+
+class IdentityManager {
+  - registry: PatientRegistry
+  + matchIncomingData(data: IncomingPatientData): HospitalPatient
+  + createTemporaryIdentity(data: IncomingPatientData): HospitalPatient
+}
+
+class IncomingPatientData {
+  - externalPatientId: String
+  - sourceSystem: String
+  - receivedAt: long
+  + hasRequiredIdentifiers(): boolean
+}
+
+class PatientRegistry {
+  - registeredPatients: List<HospitalPatient>
+  + findByExternalId(externalPatientId: String): HospitalPatient
+  + registerPatient(patient: HospitalPatient): void
+}
+
+class IdentityMismatchException {
+  - message: String
+  + getMessage(): String
+}
+
+PatientIdentifier "1" --> "1" IdentityManager : delegates matching
+IdentityManager "1" --> "1" PatientRegistry : searches
+PatientRegistry "1" o-- "0..*" HospitalPatient : stores
+IncomingPatientData "0..*" --> "0..1" HospitalPatient : matched to
+IdentityManager "1" ..> IdentityMismatchException : throws when unsafe
+
+@enduml

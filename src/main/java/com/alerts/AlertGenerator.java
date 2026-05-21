@@ -2,6 +2,16 @@ package com.alerts;
 
 import com.data_management.DataStorage;
 import com.data_management.Patient;
+import com.data_management.PatientRecord;
+import com.alerts.factories.AlertFactory;
+import com.alerts.factories.ECGAlertFactory;
+import com.alerts.strategies.AlertStrategy;
+import com.alerts.strategies.BloodPressureStrategy;
+import com.alerts.strategies.HeartRateStrategy;
+import com.alerts.strategies.OxygenSaturationStrategy;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * The {@code AlertGenerator} class is responsible for monitoring patient data
@@ -10,7 +20,11 @@ import com.data_management.Patient;
  * it against specific health criteria.
  */
 public class AlertGenerator {
-    private DataStorage dataStorage;
+    // Google Java Style: marked the field final because it is assigned only once.
+    private final DataStorage dataStorage;
+    private final List<Alert> triggeredAlerts;
+    private final List<AlertStrategy> alertStrategies;
+    private final AlertFactory manualAlertFactory;
 
     /**
      * Constructs an {@code AlertGenerator} with a specified {@code DataStorage}.
@@ -22,6 +36,13 @@ public class AlertGenerator {
      */
     public AlertGenerator(DataStorage dataStorage) {
         this.dataStorage = dataStorage;
+        this.triggeredAlerts = new ArrayList<>();
+        this.alertStrategies = new ArrayList<>();
+        // Strategy Pattern: each strategy owns one family of alert rules.
+        this.alertStrategies.add(new BloodPressureStrategy());
+        this.alertStrategies.add(new OxygenSaturationStrategy());
+        this.alertStrategies.add(new HeartRateStrategy());
+        this.manualAlertFactory = new ECGAlertFactory();
     }
 
     /**
@@ -35,7 +56,43 @@ public class AlertGenerator {
      * @param patient the patient data to evaluate for alert conditions
      */
     public void evaluateData(Patient patient) {
-        // Implementation goes here
+        List<PatientRecord> records = patient.getAllRecords();
+        records.sort(Comparator.comparingLong(PatientRecord::getTimestamp));
+
+        for (AlertStrategy alertStrategy : alertStrategies) {
+            for (Alert alert : alertStrategy.checkAlert(patient, records)) {
+                triggerAlert(alert);
+            }
+        }
+        checkTriggeredAlertButton(patient, records);
+    }
+
+    /**
+     * Returns a copy of the alerts generated so tests and callers can inspect them.
+     *
+     * @return generated alerts
+     */
+    public List<Alert> getTriggeredAlerts() {
+        return new ArrayList<>(triggeredAlerts);
+    }
+
+    private void checkTriggeredAlertButton(Patient patient, List<PatientRecord> records) {
+        for (PatientRecord record : filterByType(records, "Alert")) {
+            if (record.getMeasurementValue() == 1.0) {
+                triggerAlert(manualAlertFactory.createAlert(String.valueOf(patient.getPatientId()),
+                        "Manual alert triggered", record.getTimestamp()));
+            }
+        }
+    }
+
+    private List<PatientRecord> filterByType(List<PatientRecord> records, String recordType) {
+        List<PatientRecord> matchingRecords = new ArrayList<>();
+        for (PatientRecord record : records) {
+            if (recordType.equals(record.getRecordType())) {
+                matchingRecords.add(record);
+            }
+        }
+        return matchingRecords;
     }
 
     /**
@@ -47,6 +104,6 @@ public class AlertGenerator {
      * @param alert the alert object containing details about the alert condition
      */
     private void triggerAlert(Alert alert) {
-        // Implementation might involve logging the alert or notifying staff
+        triggeredAlerts.add(alert);
     }
 }

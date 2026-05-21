@@ -1,0 +1,63 @@
+@startuml
+title CHMS Alert Generation System
+
+' This diagram keeps alert logic separate from storage and notification work.
+class AlertGenerator {
+  - thresholds: List<PatientThreshold>
+  - dataStorage: DataStorage
+  + evaluateData(patientData: PatientData): Alert
+  + isThresholdExceeded(patientData: PatientData): boolean
+}
+
+class Alert {
+  - alertId: String
+  - patientId: String
+  - severity: String
+  - message: String
+  - createdAt: long
+  + getSeverity(): String
+  + getMessage(): String
+}
+
+class AlertManager {
+  - activeAlerts: List<Alert>
+  - notifier: MedicalStaffNotifier
+  + handleAlert(alert: Alert): void
+  + resolveAlert(alertId: String): void
+  + getActiveAlerts(): List<Alert>
+}
+
+class PatientThreshold {
+  - metricName: String
+  - minimumValue: double
+  - maximumValue: double
+  + isOutsideRange(value: double): boolean
+}
+
+class MedicalStaffNotifier {
+  - notificationChannel: String
+  + notifyStaff(alert: Alert): void
+}
+
+class PatientData {
+  - patientId: String
+  - metricName: String
+  - value: double
+  - timestamp: long
+  + isRecent(currentTime: long): boolean
+}
+
+class DataStorage {
+  + getLatestPatientData(patientId: String): PatientData
+  + saveAlert(alert: Alert): void
+}
+
+AlertGenerator "1" --> "0..*" PatientThreshold : checks
+AlertGenerator "1" --> "1" DataStorage : reads data
+AlertGenerator "1" --> "0..1" Alert : creates
+AlertManager "1" o-- "0..*" Alert : manages
+AlertManager "1" --> "1" MedicalStaffNotifier : sends alerts
+Alert "1" --> "1" PatientData : based on
+DataStorage "1" --> "0..*" PatientData : stores
+
+@enduml
