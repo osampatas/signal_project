@@ -32,11 +32,10 @@ public class FileOutputStrategy implements OutputStrategy {
 
     /**
      * Saves one generated data point to the file for its label.
-     *
-     * @param patientId the simulated patient's identifier
-     * @param timestamp the time when the data was generated
-     * @param label the type of data being written
-     * @param data the generated data value
+     *  patientId the simulated patient's identifier
+     *  timestamp the time when the data was generated
+     *  label the type of data being written
+     *  data the generated data value
      */
     @Override
     public void output(int patientId, long timestamp, String label, String data) {
@@ -47,11 +46,10 @@ public class FileOutputStrategy implements OutputStrategy {
             System.err.println("Error creating base directory: " + e.getMessage());
             return;
         }
-        // Google Java Style: renamed the local variable to lowerCamelCase.
+        // Google Java Style: renammed the local variable to lowerCamelCase.
         String filePath = fileMap.computeIfAbsent(label,
                 k -> Paths.get(baseDirectory, label + ".txt").toString());
 
-        // Write the data to the file
         try (PrintWriter out = new PrintWriter(
                 Files.newBufferedWriter(Paths.get(filePath), StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
             out.printf("Patient ID: %d, Timestamp: %d, Label: %s, Data: %s%n", patientId, timestamp, label, data);
